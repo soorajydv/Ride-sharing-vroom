@@ -13,7 +13,6 @@ export const createRideRequest = async (
   try {
     // Validate incoming data
     const validatedData = rideRequestSchema.parse(req.body);
-    console.log(validatedData);
 
     const db = await dbConnection();
     const ridesCollection = db.collection("rides");
@@ -23,7 +22,6 @@ export const createRideRequest = async (
 
     const user = await userCollection.findOne({ username: userName });
     const userId = user._id.toString();
-    console.log(userId, userName);
 
     const newRide = {
       ...validatedData,
@@ -78,12 +76,9 @@ export const updateRideStatus = async (
     const drivername = req.user.username;
     const user = await usersCollection.findOne({ username: drivername });
     const userId = user._id.toString();
-    console.log("driverrrrr", userId, drivername);
 
     const driverId = userId;
     const passengerId = ride.passengerId.toString();
-
-    console.log("ppppp", driverId, passengerId);
 
     // Await the result of the findOne queries
     const driver = await usersCollection.findOne({
@@ -93,8 +88,6 @@ export const updateRideStatus = async (
       _id: ObjectId.createFromHexString(passengerId),
     });
 
-    console.log(driver, passenger);
-
     // Check if both users are found
     if (!driver || !passenger) {
       return res.status(404).json({ error: "Driver or Passenger not found" });
@@ -102,10 +95,6 @@ export const updateRideStatus = async (
 
     const driverName = driver.username;
     const passengerName = passenger.username;
-
-    // Continue with the rest of your code...
-    console.log("Driver Name:", driverName);
-    console.log("Passenger Name:", passengerName);
 
     const ridestatus = validatedData.status;
 
@@ -133,9 +122,6 @@ export const updateRideStatus = async (
     const passengerSocket = passengerSockets.find(
       (passenger) => passenger.username === passengerName
     );
-
-    console.log("xxxxxxxxxx", driverSocket[`socketId`]);
-    console.log("xxxxxxxxxx", passengerSocket[`socketId`]);
 
     // Get the socket IDs if they exist
     const driverSocketId = driverSocket?.socketId;
@@ -168,6 +154,14 @@ export const updateRideStatus = async (
       rideId,
       status: ridestatus,
       message: `The ride status has been updated to ${ridestatus}.`,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Emit ride status update to both driver and passenger
+    io.to(rideRoom).emit("ride:join", {
+      rideId,
+      status: "in-progress",
+      message: `The driver is on the way.`,
       timestamp: new Date().toISOString(),
     });
 
