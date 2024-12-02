@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "allowJs": false,
+    "outDir": "./build",
+    "module": "CommonJS",
+    "sourceMap": true,
+    "esModuleInterop": true, 
+    "target": "ES6",
+    "noImplicitAny": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "types": ["node","jest"],
+    "strict": false,
+    "typeRoots": ["node_modules/@types", "src/types"]
+
+  },
+  "exclude": ["node_modules"]
+}
+//sudo lsof -i:8000
+//kill -9 pid
