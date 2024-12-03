@@ -1,7 +1,6 @@
 import { io } from "../index";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
-// Arrays to store driver and passenger sockets
 export const driverSockets: { username: string; socketId: string }[] = [];
 export const passengerSockets: { username: string; socketId: string }[] = [];
 
@@ -42,11 +41,10 @@ export function socketServer() {
 
       if (decoded && decoded.username) {
         const username = decoded.username;
-        const role = decoded.userType; // Assuming 'userType' indicates if it's a driver or passenger
+        const role = decoded.userType;
 
         console.log(username, role);
 
-        // Store the username -> socketId mapping based on role
         if (role === "driver") {
           // Push the socket data to driverSockets array
           driverSockets.push({ username, socketId: socket.id });
@@ -54,7 +52,6 @@ export function socketServer() {
             `Driver ${username} connected with socket ID: ${socket.id}`
           );
         } else if (role === "passenger") {
-          // Push the socket data to passengerSockets array
           passengerSockets.push({ username, socketId: socket.id });
           console.log(
             `Passenger ${username} connected with socket ID: ${socket.id}`
@@ -84,9 +81,7 @@ export function socketServer() {
       return;
     }
 
-    // Handle disconnection
     socket.on("disconnect", () => {
-      // Remove from the appropriate array based on user role
       if (driverSockets.length > 0) {
         const driverIndex = driverSockets.findIndex(
           (driver) => driver.socketId === socket.id
@@ -95,7 +90,7 @@ export function socketServer() {
           console.log(
             `Driver ${driverSockets[driverIndex].username} disconnected`
           );
-          driverSockets.splice(driverIndex, 1); // Remove from the driver array
+          driverSockets.splice(driverIndex, 1);
         }
       }
 
@@ -107,7 +102,7 @@ export function socketServer() {
           console.log(
             `Passenger ${passengerSockets[passengerIndex].username} disconnected`
           );
-          passengerSockets.splice(passengerIndex, 1); // Remove from the passenger array
+          passengerSockets.splice(passengerIndex, 1);
         }
       }
     });

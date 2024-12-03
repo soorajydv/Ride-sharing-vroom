@@ -6,6 +6,54 @@ import { rideRequestSchema, rideStatusUpdateSchema } from "../validation/ride";
 import { io } from "../index";
 import { handleZodError } from "../utils/zodErrorHandler";
 
+export const getRideDetails = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const { rideId } = req.params;
+
+    // Validate the rideId format
+    if (!ObjectId.isValid(rideId)) {
+      return res.status(400).json({ error: "Invalid ride ID format." });
+    }
+
+    const db = await dbConnection();
+    const ridesCollection = db.collection("rides");
+    const usersCollection = db.collection("users");
+
+    // Fetch ride details
+    const ride = await ridesCollection.findOne({ _id: new ObjectId(rideId) });
+
+    if (!ride) {
+      return res.status(404).json({ error: "Ride not found." });
+    }
+
+    // Fetch passenger and driver details if available
+    const passenger = await usersCollection.findOne({
+      _id: new ObjectId(ride.passengerId),
+    });
+    const driver = ride.acceptedBy
+      ? await usersCollection.findOne({ _id: new ObjectId(ride.acceptedBy) })
+      : null;
+
+    // Format the response
+    const rideDetails = {
+      rideId: ride._id.toString(),
+      pickupLocation: ride.pickupLocation,
+      dropoffLocation: ride.dropoffLocation,
+      rideType: ride.rideType,
+      status: ride.status,
+      requestedAt: ride.requestedAt,
+    };
+
+    res.json({ message: "Ride details fetched successfully.", rideDetails });
+  } catch (err) {
+    const errorMessage = handleZodError(err);
+    res.status(400).json({ error: errorMessage });
+  }
+};
+
 export const createRideRequest = async (
   req: Request,
   res: Response
@@ -35,7 +83,7 @@ export const createRideRequest = async (
     // Broadcast ride request to all connected drivers
     io.emit("ride:request", {
       rideId: insertedId.toString(),
-      passengerName: req.user.username, // Include passenger's ID
+      passengerName: req.user.username,
       pickup: validatedData.pickupLocation,
       destination: validatedData.dropoffLocation,
       message: "A new ride request is available.",
@@ -80,7 +128,6 @@ export const updateRideStatus = async (
     const driverId = userId;
     const passengerId = ride.passengerId.toString();
 
-    // Await the result of the findOne queries
     const driver = await usersCollection.findOne({
       _id: ObjectId.createFromHexString(driverId),
     });
@@ -88,7 +135,6 @@ export const updateRideStatus = async (
       _id: ObjectId.createFromHexString(passengerId),
     });
 
-    // Check if both users are found
     if (!driver || !passenger) {
       return res.status(404).json({ error: "Driver or Passenger not found" });
     }
@@ -98,22 +144,17 @@ export const updateRideStatus = async (
 
     const ridestatus = validatedData.status;
 
-    // Update ride status and acceptedBy in the database
     await ridesCollection.updateOne(
       { _id: new ObjectId(rideId) },
       {
         $set: {
           status: ridestatus,
-          acceptedBy: driverId, // Only set acceptedBy if status is 'accepted'
+          acceptedBy: driverId,
         },
       }
     );
 
     console.log(`Ride updated to ${ridestatus}`);
-
-    // Debug: Log the driverSockets and passengerSockets arrays
-    console.log("Driver Sockets:", driverSockets);
-    console.log("Passenger Sockets:", passengerSockets);
 
     // Find the driver and passenger socket IDs by their respective usernames
     const driverSocket = driverSockets.find(
@@ -140,10 +181,6 @@ export const updateRideStatus = async (
     // Create a room with the ride ID (so both the driver and passenger join this room)
     const rideRoom = `ride:${rideId}`;
 
-    // Log room joining process
-    console.log(`Driver and passenger joining room: ${rideRoom}`);
-
-    // Have both the driver and passenger join the room
     io.sockets.sockets.get(driverSocketId)?.join(rideRoom);
     io.sockets.sockets.get(passengerSocketId)?.join(rideRoom);
 

@@ -22,20 +22,20 @@ export const authMiddleware = async (
 
   if (!token) {
     res.status(401).json({ error: "Access token is required" });
+    return; // Terminate the middleware execution
   }
 
   try {
-    // Verify the token
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
 
     if (typeof decoded === "object" && decoded.username) {
       req.user = { username: decoded.username };
+      next(); // Pass control to the next middleware/route handler
     } else {
       throw new Error("Token payload does not contain valid user info");
     }
-
-    next();
   } catch (err) {
     res.status(401).json({ error: "Invalid or expired access token" });
+    return; // Terminate the middleware execution
   }
 };

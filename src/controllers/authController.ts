@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { signupSchema, loginSchema } from "../validation/auth";
 import { dbConnection } from "../utils/dbConnection";
-import { generateTokens } from "../utils/tokenGenerator";
+import { generateTokens } from "../middleware/tokenGenerator";
 import { handleZodError } from "../utils/zodErrorHandler";
 
 // Signup Controller

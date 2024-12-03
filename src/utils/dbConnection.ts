@@ -10,7 +10,7 @@ export async function dbConnection() {
     await client.connect();
     console.log("Connected to MongoDB server.");
 
-    return client.db(dbName); // Ensure this returns the database instance
+    return client.db(dbName);
   } catch (err) {
     console.error("Error connecting to MongoDB:", err);
     throw err;
