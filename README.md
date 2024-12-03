@@ -35,5 +35,6 @@ Ensure you have the following installed:
 
 1. Run following commands:
    ```bash
+   npx tsc
    npm start
    npm test
