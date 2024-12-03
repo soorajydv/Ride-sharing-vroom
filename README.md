@@ -38,3 +38,5 @@ Ensure you have the following installed:
    npx tsc
    npm start
    npm test
+
+## Note: sockets in postman can't be exported. Reach me to get invite
